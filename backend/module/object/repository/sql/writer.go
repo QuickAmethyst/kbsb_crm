@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"fmt"
 	"github.com/QuickAmethyst/kbsb_crm/module/object/domain"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/errors"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/sql"
@@ -100,6 +101,16 @@ func (w *writer) StoreFieldTx(tx sql.Tx, ctx context.Context, target *domain.Fie
 }
 
 func (w *writer) StoreObject(ctx context.Context, target *domain.Object) error {
+	var err error
+	if target.ID == uuid.Nil {
+		target.ID, err = uuid.NewV7()
+		if err != nil {
+			return errors.PropagateWithCode(err, EcodeStoreFailed, "store failed")
+		}
+	}
+
+	fmt.Println(target)
+
 	return store(ctx, w.db, "objects", target)
 }
 

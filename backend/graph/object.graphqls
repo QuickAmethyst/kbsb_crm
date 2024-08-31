@@ -1,7 +1,75 @@
 extend type Query {
-    hello: Boolean
+    records(objectID: UUID!, input: RecordsInput): RecordsResult!
 }
 
 extend type Mutation {
-    world: Boolean
+    storeObject(input: WriteObjectInput!): Object!
+    storeField(input: WriteFieldInput!): Field!
+    storeRecord(input: WriteRecordInput!): Record!
+}
+
+type RecordsResult {
+    data: [Record!]!
+    paging: Paging!
+}
+
+input RecordsInput {
+    filters: [RecordFilter!]
+    paging: PagingInput
+}
+
+input RecordFilter {
+    fieldID: UUID!
+    value: String!
+}
+
+input WriteRecordInput {
+    objectID: UUID!
+    data: Map!
+}
+
+type Record {
+    id: UUID!
+    objectID: UUID!
+    data: Map!
+}
+
+input WriteFieldInput {
+    objectID: UUID!
+    label: String!
+    dataType: FieldDataType!
+    defaultValue: String
+    isIndexed: Boolean!
+    isRequired: Boolean!
+    picklistValues: [String!]
+}
+
+type Field {
+    id: UUID!
+    objectID: UUID!
+    organizationID: Int!
+    label: String!
+    dataType: FieldDataType!
+    defaultValue: String
+    isIndexed: Boolean!
+    isRequired: Boolean!
+}
+
+enum FieldDataType {
+    string
+    number
+    date
+    picklist
+}
+
+input WriteObjectInput {
+    name: String!
+    description: String
+}
+
+type Object {
+    id: UUID!
+    organizationID: Int!
+    name: String!
+    description: String
 }

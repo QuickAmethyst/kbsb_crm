@@ -6,15 +6,190 @@ package graph
 
 import (
 	"context"
+	sql2 "database/sql"
 	"fmt"
+
+	"github.com/QuickAmethyst/kbsb_crm/graph/model"
+	"github.com/QuickAmethyst/kbsb_crm/module/object/domain"
+	sql3 "github.com/QuickAmethyst/kbsb_crm/module/object/repository/sql"
+	"github.com/QuickAmethyst/kbsb_crm/module/object/usecase"
+	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/appcontext"
+	sdkError "github.com/QuickAmethyst/kbsb_crm/stdlibgo/errors"
+	sdkGraphql "github.com/QuickAmethyst/kbsb_crm/stdlibgo/graphql"
+	qb "github.com/QuickAmethyst/kbsb_crm/stdlibgo/querybuilder/sql"
+	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/sql"
+	"github.com/google/uuid"
 )
 
-// World is the resolver for the world field.
-func (r *mutationResolver) World(ctx context.Context) (*bool, error) {
-	panic(fmt.Errorf("not implemented: World - world"))
+// StoreObject is the resolver for the storeObject field.
+func (r *mutationResolver) StoreObject(ctx context.Context, input model.WriteObjectInput) (*model.Object, error) {
+	target := domain.Object{
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+		Name:           input.Name,
+		Description: sql.NullString{
+			Valid: input.Description != nil && len(*input.Description) > 0,
+			String: func() string {
+				if input.Description != nil {
+					return *input.Description
+				}
+
+				return ""
+			}(),
+		},
+	}
+
+	err := r.ObjectUsecase.StoreObject(ctx, &target)
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	res := &model.Object{
+		ID:             target.ID,
+		OrganizationID: target.OrganizationID,
+		Name:           target.Name,
+	}
+
+	if target.Description.Valid {
+		res.Description = &target.Description.String
+	}
+
+	return res, nil
 }
 
-// Hello is the resolver for the hello field.
+// StoreField is the resolver for the storeField field.
+func (r *mutationResolver) StoreField(ctx context.Context, input model.WriteFieldInput) (*model.Field, error) {
+	picklistValues := make([]*domain.PicklistValues, 0)
+	for _, v := range input.PicklistValues {
+		picklistValues = append(picklistValues, &domain.PicklistValues{
+			Value: v,
+		})
+	}
+
+	field := &domain.Field{
+		ObjectID:       input.ObjectID,
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+		Label:          input.Label,
+		DataType:       domain.FieldDataType(input.DataType),
+		DefaultValue: sql2.NullString{
+			Valid: input.DefaultValue != nil && len(*input.DefaultValue) > 0,
+			String: func() string {
+				if input.DefaultValue != nil {
+					return *input.DefaultValue
+				}
+
+				return ""
+			}(),
+		},
+		IsIndexed:  input.IsIndexed,
+		IsRequired: input.IsRequired,
+	}
+
+	err := r.ObjectUsecase.StoreField(ctx, &usecase.StoreFieldInput{
+		Field:          field,
+		PicklistValues: input.PicklistValues,
+	})
+
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	return &model.Field{
+		ID:             field.ID,
+		ObjectID:       field.ObjectID,
+		OrganizationID: field.OrganizationID,
+		Label:          field.Label,
+		DataType:       model.FieldDataType(field.DataType),
+		DefaultValue: func() *string {
+			if !field.DefaultValue.Valid {
+				return nil
+			}
+
+			return &field.DefaultValue.String
+		}(),
+		IsIndexed:  field.IsIndexed,
+		IsRequired: field.IsRequired,
+	}, nil
+}
+
+// StoreRecord is the resolver for the storeRecord field.
+func (r *mutationResolver) StoreRecord(ctx context.Context, input model.WriteRecordInput) (*model.Record, error) {
+	record := domain.Record{
+		ObjectID:       input.ObjectID,
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+		Data:           input.Data,
+	}
+
+	err := r.ObjectUsecase.StoreRecord(ctx, &record)
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	return &model.Record{
+		ID:       record.ID,
+		ObjectID: record.ObjectID,
+		Data:     record.Data,
+	}, nil
+}
+
+// Records is the resolver for the records field.
+func (r *queryResolver) Records(ctx context.Context, objectID uuid.UUID, input *model.RecordsInput) (*model.RecordsResult, error) {
+	var (
+		err     error
+		records []domain.Record
+		filters []sql3.FilterRecordField
+		paging  qb.Paging
+	)
+
+	if input != nil {
+		filters = make([]sql3.FilterRecordField, len(input.Filters))
+		for i, f := range input.Filters {
+			filters[i] = sql3.FilterRecordField{
+				FieldID: f.FieldID,
+				Value:   f.Value,
+			}
+		}
+
+		if input.Paging != nil {
+			paging = qb.Paging{
+				CurrentPage: input.Paging.CurrentPage,
+				PageSize:    input.Paging.PageSize,
+			}
+		}
+	}
+
+	records, paging, err = r.ObjectUsecase.GetRecordListByObjectID(ctx, objectID, filters, paging)
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	data := make([]model.Record, len(records))
+	for i, r := range records {
+		data[i] = model.Record{
+			ID:       r.ID,
+			ObjectID: r.ObjectID,
+			Data:     r.Data,
+		}
+	}
+
+	return &model.RecordsResult{
+		Data: data,
+		Paging: &model.Paging{
+			CurrentPage: paging.CurrentPage,
+			PageSize:    paging.PageSize,
+			Total:       paging.Total,
+		},
+	}, nil
+}
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
 func (r *queryResolver) Hello(ctx context.Context) (*bool, error) {
 	panic(fmt.Errorf("not implemented: Hello - hello"))
+}
+func (r *mutationResolver) World(ctx context.Context) (*bool, error) {
+	panic(fmt.Errorf("not implemented: World - world"))
 }

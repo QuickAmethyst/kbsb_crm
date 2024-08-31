@@ -32,7 +32,7 @@ func SetBearerToken(ctx context.Context, val string) context.Context {
 func GetOrganizationID(ctx context.Context) int {
 	v, ok := ctx.Value(OrganizationID).(int)
 	if !ok {
-		return 0
+		return -1
 	}
 
 	return v

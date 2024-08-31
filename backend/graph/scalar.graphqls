@@ -1,3 +1,6 @@
 scalar Uint
 scalar Upload
 scalar Time
+scalar Map
+scalar Any
+scalar UUID

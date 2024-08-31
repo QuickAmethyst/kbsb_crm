@@ -4,10 +4,13 @@ import (
 	"errors"
 	"github.com/QuickAmethyst/kbsb_crm/graph"
 	"github.com/QuickAmethyst/kbsb_crm/graph/generated"
+	objectSQL "github.com/QuickAmethyst/kbsb_crm/module/object/repository/sql"
+	"github.com/QuickAmethyst/kbsb_crm/module/object/usecase"
 	"github.com/QuickAmethyst/kbsb_crm/rest"
 	sdkGrace "github.com/QuickAmethyst/kbsb_crm/stdlibgo/grace"
 	sdkGraphql "github.com/QuickAmethyst/kbsb_crm/stdlibgo/graphql"
 	sdkHttp "github.com/QuickAmethyst/kbsb_crm/stdlibgo/http"
+	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/http/header"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/httpserver"
 	sdkLogger "github.com/QuickAmethyst/kbsb_crm/stdlibgo/logger"
 	sdkRedis "github.com/QuickAmethyst/kbsb_crm/stdlibgo/redis"
@@ -97,14 +100,30 @@ func initRedis() {
 	}
 }
 
+func initResolver() {
+	objectRepo := objectSQL.New(&objectSQL.Options{
+		MasterDB: sqlClient.Master(),
+		SlaveDB:  sqlClient.Slave(),
+	})
+
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	resolver = graph.Resolver{
+		Logger:        logger,
+		ObjectUsecase: usecase.New(objectRepo),
+	}
+}
+
 func initRest() {
 	http = sdkHttp.New(sdkHttp.Options{
 		LogRequest:  sdkHttp.LogRequestOptions{Enabled: true},
 		LogResponse: sdkHttp.LogResponseOptions{Enabled: true},
 		Cors: sdkHttp.CorsOptions{
-			AllowedOrigins:   []string{"http://localhost:3000"},
+			AllowedOrigins:   []string{"http://localhost:8000", "http://localhost:3000"},
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-			AllowedHeaders:   []string{"Authorization", "Content-Type"},
+			AllowedHeaders:   []string{"Authorization", "Content-Type", header.OrganizationID},
 			MaxAge:           0,
 			AllowCredentials: true,
 			Debug:            true,
@@ -118,23 +137,24 @@ func init() {
 	initLogger()
 	initRedis()
 	initDB()
-	initRest()
+	initResolver()
 	initGraph()
+	initRest()
 }
 
 func main() {
 	server := httpserver.New(httpserver.Options{
 		Name:              "kbsb_crm",
 		Address:           ":8000",
-		ReadHeaderTimeout: 5,
-		ReadTimeout:       5,
-		WriteTimeout:      5,
-		IdleTimeout:       5,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+		IdleTimeout:       5 * time.Second,
 	}, http.Handler(), stdLog.Writer())
 
 	grace, err := sdkGrace.New(logger, sdkGrace.Options{
-		UpgradeTimeout:  10,
-		ShutdownTimeout: 10,
+		UpgradeTimeout:  10 * time.Second,
+		ShutdownTimeout: 10 * time.Second,
 		Network:         "tcp",
 	})
 

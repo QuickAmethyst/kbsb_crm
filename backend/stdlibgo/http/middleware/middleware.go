@@ -61,9 +61,12 @@ func (m *middleware) AppendHeaderToContext(handler http.HandlerFunc) http.Handle
 			ForwardedFor: r.Header.Get(header.ForwardedFor),
 		})
 
-		orgID, _ := strconv.Atoi(r.Header.Get(header.OrganizationID))
+		orgID, err := strconv.Atoi(r.Header.Get(header.OrganizationID))
+		if err != nil {
+			orgID = -1
+		}
 
-		appcontext.SetOrganizationID(ctx, orgID)
+		ctx = appcontext.SetOrganizationID(ctx, orgID)
 
 		handler(w, r.WithContext(ctx))
 	}

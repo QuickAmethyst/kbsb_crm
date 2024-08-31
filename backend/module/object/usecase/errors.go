@@ -6,4 +6,6 @@ const (
 	EcodeObjectNotFound       = iota
 	EcodeInvalidFieldValue    = iota
 	EcodeDataTypeNotSupported = iota
+	EcodeFieldNotFound        = iota
+	EcodeDefaultValueEmpty    = iota
 )

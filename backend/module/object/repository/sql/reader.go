@@ -10,7 +10,6 @@ import (
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/sql"
 	"github.com/google/uuid"
 	"strings"
-	"time"
 )
 
 type Reader interface {
@@ -58,7 +57,7 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 	res := make([]domain.Record, 0)
 	p.Normalize()
 
-	needIndexPivotJoin := false
+	indexJoinCounter := 0
 	args := make([]interface{}, 0)
 	baseQuery := "SELECT r.* FROM records r"
 	countQuery := "SELECT COUNT(*) FROM records r"
@@ -83,46 +82,49 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 			mapFilters[field.ID] = field
 		}
 
-		// Construct WHERE clause based on filters
-		var whereClauses []string
+		var (
+			whereClauses    []string
+			whereClauseArgs []interface{}
+		)
 
 		for _, filter := range filters {
 			field, ok := mapFilters[filter.FieldID]
 			if !ok {
-				return res, p, errors.NewErrorWithCode(EcodeGetListFailed, "invalid field id")
+				return res, p, errors.NewErrorWithCode(EcodeGetListFailed, "field id `%s` is not exist on object `%s`", filter.FieldID, objectID)
 			}
 
 			if field.IsIndexed {
-				whereClauses = append(whereClauses, "ip.field_id = ? AND ip.indexed_value = ?")
-				needIndexPivotJoin = true
-				switch filter.Value.(type) {
-				case string:
-					whereClauses = append(whereClauses, "ip.field_id = ? AND ip.string_value = ?")
-				case int, int32, int64, float32, float64:
-					whereClauses = append(whereClauses, "ip.field_id = ? AND ip.numeric_value = ?")
-				case time.Time:
-					whereClauses = append(whereClauses, "ip.field_id = ? AND ip.date_value = ?")
+				indexJoinCounter++
+				q := fmt.Sprintf(" JOIN indexes ip%d ON r.id = ip%d.record_id AND ip%d.field_id = ? AND ", indexJoinCounter, indexJoinCounter, indexJoinCounter)
+				args = append(args, filter.FieldID, filter.Value)
+
+				switch field.DataType {
+				case domain.StringDataType, domain.PicklistDataType:
+					q += fmt.Sprintf("ip%d.string_value = ?", indexJoinCounter)
+				case domain.NumberDataType:
+					q += fmt.Sprintf("ip%d.number_value = ?", indexJoinCounter)
+				case domain.DateDataType:
+					q += fmt.Sprintf("ip%d.date_value = ?", indexJoinCounter)
 				default:
 					return res, p, fmt.Errorf("unsupported filter value type: %T", filter.Value)
 				}
 
-				args = append(args, filter.FieldID, filter.Value)
+				baseQuery += q
+				countQuery += q
 			} else {
 				whereClauses = append(whereClauses, "r.data->>? = ?")
-				args = append(args, field.Label, filter.Value)
+				whereClauseArgs = append(whereClauseArgs, field.Label, filter.Value)
 			}
 		}
 
-		if needIndexPivotJoin {
-			q := " JOIN index_pivot ip ON r.id = ip.record_id"
-			baseQuery += q
-			countQuery += q
-		}
+		baseQuery = strings.TrimSuffix(baseQuery, " AND ")
+		countQuery = strings.TrimSuffix(countQuery, " AND ")
 
 		if len(whereClauses) > 0 {
 			q := " WHERE " + strings.Join(whereClauses, " AND ")
 			baseQuery += q
 			countQuery += q
+			args = append(args, whereClauseArgs...)
 		}
 	}
 

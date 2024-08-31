@@ -67,3 +67,11 @@ models:
       - github.com/99designs/gqlgen/graphql.Uint
       - github.com/99designs/gqlgen/graphql.Uint64
       - github.com/99designs/gqlgen/graphql.Uint32
+
+  Map:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+
+  UUID:
+    model:
+      - github.com/99designs/gqlgen/graphql.UUID

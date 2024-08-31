@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/QuickAmethyst/kbsb_crm/module/object/domain"
 	"github.com/QuickAmethyst/kbsb_crm/module/object/repository/sql"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/appcontext"
@@ -9,7 +10,6 @@ import (
 	qb "github.com/QuickAmethyst/kbsb_crm/stdlibgo/querybuilder/sql"
 	sql2 "github.com/QuickAmethyst/kbsb_crm/stdlibgo/sql"
 	"github.com/google/uuid"
-	"math/big"
 	"strconv"
 	"time"
 )
@@ -32,7 +32,7 @@ func (w *writer) StoreRecord(ctx context.Context, target *domain.Record) error {
 	var (
 		err           error
 		indexes       []*domain.Index
-		indexedFields map[string]bool
+		indexedFields = make(map[string]bool)
 	)
 
 	target.OrganizationID = appcontext.GetOrganizationID(ctx)
@@ -79,6 +79,8 @@ func (w *writer) StoreRecord(ctx context.Context, target *domain.Record) error {
 	for k, val := range target.Data {
 		if field, ok := fieldsMap[k]; ok {
 			validData[field.Label] = val
+		} else {
+			return errors.NewErrorWithCode(EcodeFieldNotFound, "Field `%s` not found on object id `%s`", k, target.ObjectID.String())
 		}
 	}
 
@@ -115,21 +117,37 @@ func (w *writer) StoreRecord(ctx context.Context, target *domain.Record) error {
 
 		switch fieldsMap[k].DataType {
 		case domain.NumberDataType:
-			float := big.NewFloat(val.(float64))
-			index.NumberValue = *float
+			switch val.(type) {
+			case string:
+				val, err = strconv.ParseFloat(val.(string), 64)
+				if err != nil {
+					return errors.Propagate(err, "Field `%s` must be a number", k)
+				}
+			case json.Number:
+				val, err = val.(json.Number).Float64()
+				if err != nil {
+					return errors.Propagate(err, "Field `%s` must be a number", k)
+				}
+			}
+
+			index.NumberValue = sql2.NullFloat64{Valid: true, Float64: val.(float64)}
 		case domain.DateDataType:
-			index.DateValue, err = time.Parse(time.RFC3339, val.(string))
+			parsedVal, err := time.Parse(time.RFC3339, val.(string))
 			if err != nil {
 				return errors.Propagate(err, "Error on parse date value")
 			}
+
+			index.DateValue = sql2.NullTime{Valid: true, Time: parsedVal}
 		case domain.PicklistDataType, domain.StringDataType:
-			index.StringValue = val.(string)
+			index.StringValue = sql2.NullString{Valid: true, String: val.(string)}
 		default:
 			return errors.NewErrorWithCode(EcodeDataTypeNotSupported, "data type not supported")
 		}
 
 		indexes = append(indexes, index)
 	}
+
+	target.Data = validData
 
 	err = w.domain.Transaction(ctx, nil, func(tx sql2.Tx) error {
 		err = w.domain.StoreRecordTx(tx, ctx, target)
@@ -155,7 +173,20 @@ func (w *writer) StoreRecord(ctx context.Context, target *domain.Record) error {
 func (w *writer) StoreField(ctx context.Context, target *StoreFieldInput) error {
 	var err error
 
-	target.Field.OrganizationID = appcontext.GetOrganizationID(ctx)
+	objects, _, err := w.domain.GetObjectList(ctx, sql.ObjectStatement{
+		ID:             target.Field.ObjectID,
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+	}, qb.Paging{})
+
+	if err != nil {
+		return errors.Propagate(err, "Error on check object exist")
+	}
+
+	if len(objects) != 1 {
+		return errors.NewErrorWithCode(EcodeObjectNotFound, "object not found")
+	}
+
+	target.Field.OrganizationID = objects[0].OrganizationID
 	target.Field.ID, err = uuid.NewV7()
 	if err != nil {
 		return errors.PropagateWithCode(err, EcodeStoreFailed, "generate uuid v7 failed")
@@ -164,6 +195,15 @@ func (w *writer) StoreField(ctx context.Context, target *StoreFieldInput) error 
 	target.Field.DefaultValue.Valid = len(target.Field.DefaultValue.String) > 0
 
 	err = w.domain.Transaction(ctx, nil, func(tx sql2.Tx) error {
+		err = w.domain.StoreFieldTx(tx, ctx, target.Field)
+		if err != nil {
+			return errors.Propagate(err, "Error on store field")
+		}
+
+		if target.Field.IsRequired && (!target.Field.DefaultValue.Valid || len(target.Field.DefaultValue.String) <= 0) {
+			return errors.NewErrorWithCode(EcodeDefaultValueEmpty, "default value is required when field is required")
+		}
+
 		if target.Field.DataType == domain.PicklistDataType {
 			if len(target.PicklistValues) == 0 {
 				return errors.NewErrorWithCode(EcodePicklistValuesEmpty, "picklist values required for `picklist` data type")
@@ -183,7 +223,7 @@ func (w *writer) StoreField(ctx context.Context, target *StoreFieldInput) error 
 			}
 		}
 
-		return w.domain.StoreFieldTx(tx, ctx, target.Field)
+		return nil
 	})
 
 	if err != nil {
