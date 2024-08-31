@@ -32,27 +32,7 @@ type Common interface {
 
 //nolint:revive // expected
 func GetList(ctx context.Context, db Common, tableName string, dest interface{}, whereStruct interface{}, p *qb.Paging) error {
-	destType := reflect.Indirect(reflect.ValueOf(dest)).Kind()
-	if destType != reflect.Slice {
-		return fmt.Errorf("parameter `dest` should be a slice. Received %s", destType)
-	}
-
-	p.Normalize()
-
-	q, args, countQ, countArgs, err := buildListQuery(tableName, dest, whereStruct, p)
-	if err != nil {
-		return err
-	}
-
-	q, args, err = sqlx.In(q, args...)
-	if err != nil {
-		return err
-	}
-
-	countQ, countArgs, err = sqlx.In(countQ, countArgs...)
-	if err != nil {
-		return err
-	}
+	q, args, countQ, countArgs, err := GetListQuery(tableName, dest, whereStruct, p)
 
 	if err = db.SelectContext(ctx, dest, db.Rebind(q), args...); err != nil {
 		return err
@@ -66,19 +46,7 @@ func GetList(ctx context.Context, db Common, tableName string, dest interface{},
 }
 
 func GetAll(ctx context.Context, db Common, tableName string, dest interface{}, whereStruct interface{}) error {
-	destType := reflect.Indirect(reflect.ValueOf(dest)).Kind()
-	if destType != reflect.Slice {
-		return fmt.Errorf("parameter `dest` should be a slice. Received %s", destType)
-	}
-
-	selectClause, fromClause, whereClause, args, err := buildSelectQuery(tableName, dest, whereStruct)
-	if err != nil {
-		return err
-	}
-
-	q := fmt.Sprintf("%s %s %s", selectClause, fromClause, whereClause)
-
-	q, args, err = sqlx.In(q, args...)
+	q, args, err := GetAllQuery(tableName, dest, whereStruct)
 	if err != nil {
 		return err
 	}
@@ -332,4 +300,56 @@ func buildInsertQuery(tableName string, columnNames []string, columnValues [][]i
 	query := fmt.Sprintf("%s VALUES %s", insertClause, strings.Join(valueClauses, ","))
 
 	return query, valueClauseArgs
+}
+
+func GetListQuery(tableName string, dest interface{}, whereStruct interface{}, p *qb.Paging) (q string, args []interface{}, countQ string, countArgs []interface{}, err error) {
+	destType := reflect.Indirect(reflect.ValueOf(dest)).Kind()
+	if destType != reflect.Slice {
+		return q, args, countQ, countArgs, fmt.Errorf("parameter `dest` should be a slice. Received %s", destType)
+	}
+
+	p.Normalize()
+
+	q, args, countQ, countArgs, err = buildListQuery(tableName, dest, whereStruct, p)
+	if err != nil {
+		return q, args, countQ, countArgs, err
+	}
+
+	q, args, err = sqlx.In(q, args...)
+	if err != nil {
+		return q, args, countQ, countArgs, err
+	}
+
+	countQ, countArgs, err = sqlx.In(countQ, countArgs...)
+	if err != nil {
+		return q, args, countQ, countArgs, err
+	}
+
+	return q, args, countQ, countArgs, nil
+}
+
+func GetAllQuery(tableName string, dest interface{}, whereStruct interface{}) (string, []interface{}, error) {
+	var (
+		res     string
+		resArgs []interface{}
+	)
+
+	destType := reflect.Indirect(reflect.ValueOf(dest)).Kind()
+	if destType != reflect.Slice {
+		return res, resArgs, fmt.Errorf("parameter `dest` should be a slice. Received %s", destType)
+	}
+
+	selectClause, fromClause, whereClause, args, err := buildSelectQuery(tableName, dest, whereStruct)
+	if err != nil {
+		return res, resArgs, err
+	}
+
+	q := fmt.Sprintf("%s %s %s", selectClause, fromClause, whereClause)
+
+	res, resArgs, err = sqlx.In(q, args...)
+	if err != nil {
+		return res, resArgs, err
+	}
+
+	return res, resArgs, nil
 }
