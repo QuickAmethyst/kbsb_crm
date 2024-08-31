@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:13.3-alpine
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_DB: crm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7.0.4
+    container_name: redis
+    restart: always
+    command: redis-server --requirepass redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  dbdata:
+    driver: local
+  redisdata:
+    driver: local

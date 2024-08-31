@@ -1,0 +1,7 @@
+extend type Query {
+    hello: Boolean
+}
+
+extend type Mutation {
+    world: Boolean
+}
