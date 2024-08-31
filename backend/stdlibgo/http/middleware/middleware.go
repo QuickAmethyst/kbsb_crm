@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"runtime/debug"
+	"strconv"
 
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/appcontext"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/errors"
@@ -59,6 +60,10 @@ func (m *middleware) AppendHeaderToContext(handler http.HandlerFunc) http.Handle
 			Scheme:       scheme,
 			ForwardedFor: r.Header.Get(header.ForwardedFor),
 		})
+
+		orgID, _ := strconv.Atoi(r.Header.Get(header.OrganizationID))
+
+		appcontext.SetOrganizationID(ctx, orgID)
 
 		handler(w, r.WithContext(ctx))
 	}

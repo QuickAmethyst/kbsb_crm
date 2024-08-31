@@ -29,6 +29,19 @@ func SetBearerToken(ctx context.Context, val string) context.Context {
 	return context.WithValue(ctx, BearerTokenKey, val)
 }
 
+func GetOrganizationID(ctx context.Context) int {
+	v, ok := ctx.Value(OrganizationID).(int)
+	if !ok {
+		return 0
+	}
+
+	return v
+}
+
+func SetOrganizationID(ctx context.Context, orgID int) context.Context {
+	return context.WithValue(ctx, OrganizationID, orgID)
+}
+
 func GetUserID(ctx context.Context) uuid.UUID {
 	v, ok := ctx.Value(UserIDKey).(uuid.UUID)
 	if !ok {

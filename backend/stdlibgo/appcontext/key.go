@@ -9,4 +9,5 @@ const (
 	TimezoneKey
 	AppKey
 	SchedulerKey
+	OrganizationID
 )
