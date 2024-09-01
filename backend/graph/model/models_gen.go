@@ -21,6 +21,15 @@ type Field struct {
 	IsRequired     bool          `json:"isRequired"`
 }
 
+type ObjectsInput struct {
+	Paging *PagingInput `json:"paging,omitempty"`
+}
+
+type ObjectsResult struct {
+	Data   []Object `json:"data"`
+	Paging *Paging  `json:"paging"`
+}
+
 type Record struct {
 	ID       uuid.UUID              `json:"id"`
 	ObjectID uuid.UUID              `json:"objectID"`

@@ -1,4 +1,5 @@
 extend type Query {
+    objects(input: ObjectsInput): ObjectsResult!
     records(objectID: UUID!, input: RecordsInput): RecordsResult!
 }
 
@@ -6,6 +7,15 @@ extend type Mutation {
     storeObject(input: WriteObjectInput!): Object!
     storeField(input: WriteFieldInput!): Field!
     storeRecord(input: WriteRecordInput!): Record!
+}
+
+type ObjectsResult {
+    data: [Object!]!
+    paging: Paging!
+}
+
+input ObjectsInput {
+    paging: PagingInput
 }
 
 type RecordsResult {

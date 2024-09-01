@@ -71,6 +71,11 @@ type ComplexityRoot struct {
 		OrganizationID func(childComplexity int) int
 	}
 
+	ObjectsResult struct {
+		Data   func(childComplexity int) int
+		Paging func(childComplexity int) int
+	}
+
 	Paging struct {
 		CurrentPage func(childComplexity int) int
 		PageSize    func(childComplexity int) int
@@ -78,6 +83,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Objects func(childComplexity int, input *model.ObjectsInput) int
 		Records func(childComplexity int, objectID uuid.UUID, input *model.RecordsInput) int
 	}
 
@@ -99,6 +105,7 @@ type MutationResolver interface {
 	StoreRecord(ctx context.Context, input model.WriteRecordInput) (*model.Record, error)
 }
 type QueryResolver interface {
+	Objects(ctx context.Context, input *model.ObjectsInput) (*model.ObjectsResult, error)
 	Records(ctx context.Context, objectID uuid.UUID, input *model.RecordsInput) (*model.RecordsResult, error)
 }
 
@@ -241,6 +248,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Object.OrganizationID(childComplexity), true
 
+	case "ObjectsResult.data":
+		if e.complexity.ObjectsResult.Data == nil {
+			break
+		}
+
+		return e.complexity.ObjectsResult.Data(childComplexity), true
+
+	case "ObjectsResult.paging":
+		if e.complexity.ObjectsResult.Paging == nil {
+			break
+		}
+
+		return e.complexity.ObjectsResult.Paging(childComplexity), true
+
 	case "Paging.currentPage":
 		if e.complexity.Paging.CurrentPage == nil {
 			break
@@ -261,6 +282,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Paging.Total(childComplexity), true
+
+	case "Query.objects":
+		if e.complexity.Query.Objects == nil {
+			break
+		}
+
+		args, err := ec.field_Query_objects_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Objects(childComplexity, args["input"].(*model.ObjectsInput)), true
 
 	case "Query.records":
 		if e.complexity.Query.Records == nil {
@@ -317,6 +350,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputObjectsInput,
 		ec.unmarshalInputPagingInput,
 		ec.unmarshalInputRecordFilter,
 		ec.unmarshalInputRecordsInput,
@@ -426,6 +460,7 @@ var sources = []*ast.Source{
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
 	{Name: "../object.graphqls", Input: `extend type Query {
+    objects(input: ObjectsInput): ObjectsResult!
     records(objectID: UUID!, input: RecordsInput): RecordsResult!
 }
 
@@ -433,6 +468,15 @@ extend type Mutation {
     storeObject(input: WriteObjectInput!): Object!
     storeField(input: WriteFieldInput!): Field!
     storeRecord(input: WriteRecordInput!): Record!
+}
+
+type ObjectsResult {
+    data: [Object!]!
+    paging: Paging!
+}
+
+input ObjectsInput {
+    paging: PagingInput
 }
 
 type RecordsResult {
@@ -584,6 +628,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_objects_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.ObjectsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOObjectsInput2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1372,6 +1431,112 @@ func (ec *executionContext) fieldContext_Object_description(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _ObjectsResult_data(ctx context.Context, field graphql.CollectedField, obj *model.ObjectsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectsResult_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Object)
+	fc.Result = res
+	return ec.marshalNObject2ᚕgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectsResult_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Object_id(ctx, field)
+			case "organizationID":
+				return ec.fieldContext_Object_organizationID(ctx, field)
+			case "name":
+				return ec.fieldContext_Object_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Object_description(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Object", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ObjectsResult_paging(ctx context.Context, field graphql.CollectedField, obj *model.ObjectsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ObjectsResult_paging(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Paging, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Paging)
+	fc.Result = res
+	return ec.marshalNPaging2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐPaging(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ObjectsResult_paging(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ObjectsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currentPage":
+				return ec.fieldContext_Paging_currentPage(ctx, field)
+			case "pageSize":
+				return ec.fieldContext_Paging_pageSize(ctx, field)
+			case "total":
+				return ec.fieldContext_Paging_total(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Paging", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Paging_currentPage(ctx context.Context, field graphql.CollectedField, obj *model.Paging) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Paging_currentPage(ctx, field)
 	if err != nil {
@@ -1500,6 +1665,67 @@ func (ec *executionContext) fieldContext_Paging_total(_ context.Context, field g
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Uint does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_objects(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_objects(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Objects(rctx, fc.Args["input"].(*model.ObjectsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ObjectsResult)
+	fc.Result = res
+	return ec.marshalNObjectsResult2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectsResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_objects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ObjectsResult_data(ctx, field)
+			case "paging":
+				return ec.fieldContext_ObjectsResult_paging(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ObjectsResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_objects_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3703,6 +3929,33 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputObjectsInput(ctx context.Context, obj interface{}) (model.ObjectsInput, error) {
+	var it model.ObjectsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"paging"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "paging":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paging"))
+			data, err := ec.unmarshalOPagingInput2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐPagingInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Paging = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPagingInput(ctx context.Context, obj interface{}) (model.PagingInput, error) {
 	var it model.PagingInput
 	asMap := map[string]interface{}{}
@@ -4135,6 +4388,50 @@ func (ec *executionContext) _Object(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var objectsResultImplementors = []string{"ObjectsResult"}
+
+func (ec *executionContext) _ObjectsResult(ctx context.Context, sel ast.SelectionSet, obj *model.ObjectsResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, objectsResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ObjectsResult")
+		case "data":
+			out.Values[i] = ec._ObjectsResult_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paging":
+			out.Values[i] = ec._ObjectsResult_paging(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var pagingImplementors = []string{"Paging"}
 
 func (ec *executionContext) _Paging(ctx context.Context, sel ast.SelectionSet, obj *model.Paging) graphql.Marshaler {
@@ -4203,6 +4500,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "objects":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_objects(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "records":
 			field := field
 
@@ -4754,6 +5073,50 @@ func (ec *executionContext) marshalNObject2githubᚗcomᚋQuickAmethystᚋkbsb_c
 	return ec._Object(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNObject2ᚕgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Object) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNObject2githubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObject(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNObject2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObject(ctx context.Context, sel ast.SelectionSet, v *model.Object) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -4762,6 +5125,20 @@ func (ec *executionContext) marshalNObject2ᚖgithubᚗcomᚋQuickAmethystᚋkbs
 		return graphql.Null
 	}
 	return ec._Object(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNObjectsResult2githubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectsResult(ctx context.Context, sel ast.SelectionSet, v model.ObjectsResult) graphql.Marshaler {
+	return ec._ObjectsResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNObjectsResult2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectsResult(ctx context.Context, sel ast.SelectionSet, v *model.ObjectsResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ObjectsResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPaging2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐPaging(ctx context.Context, sel ast.SelectionSet, v *model.Paging) graphql.Marshaler {
@@ -5188,6 +5565,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOObjectsInput2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐObjectsInput(ctx context.Context, v interface{}) (*model.ObjectsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputObjectsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOPagingInput2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐPagingInput(ctx context.Context, v interface{}) (*model.PagingInput, error) {

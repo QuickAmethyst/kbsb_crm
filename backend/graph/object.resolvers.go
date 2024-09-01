@@ -131,6 +131,55 @@ func (r *mutationResolver) StoreRecord(ctx context.Context, input model.WriteRec
 	}, nil
 }
 
+// Objects is the resolver for the objects field.
+func (r *queryResolver) Objects(ctx context.Context, input *model.ObjectsInput) (*model.ObjectsResult, error) {
+	var (
+		err     error
+		objects []domain.Object
+		paging  qb.Paging
+	)
+
+	if input != nil {
+		if input.Paging != nil {
+			paging.CurrentPage = input.Paging.CurrentPage
+			paging.PageSize = input.Paging.PageSize
+		}
+	}
+
+	objects, paging, err = r.ObjectUsecase.GetObjectList(ctx, sql3.ObjectStatement{
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+	}, paging)
+
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	data := make([]model.Object, len(objects))
+	for i, o := range objects {
+		data[i] = model.Object{
+			ID:             o.ID,
+			OrganizationID: o.OrganizationID,
+			Name:           o.Name,
+			Description: func() *string {
+				if o.Description.Valid {
+					return &o.Description.String
+				}
+
+				return nil
+			}(),
+		}
+	}
+
+	return &model.ObjectsResult{
+		Data: data,
+		Paging: &model.Paging{
+			CurrentPage: paging.CurrentPage,
+			PageSize:    paging.PageSize,
+			Total:       paging.Total,
+		},
+	}, nil
+}
+
 // Records is the resolver for the records field.
 func (r *queryResolver) Records(ctx context.Context, objectID uuid.UUID, input *model.RecordsInput) (*model.RecordsResult, error) {
 	var (
