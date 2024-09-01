@@ -53,7 +53,7 @@ func initGraph() {
 
 func initDB() {
 	connectionOptions := sql.ConnectionOptions{
-		Host:         "localhost",
+		Host:         "db",
 		Port:         5432,
 		User:         "postgres",
 		Password:     "postgres",

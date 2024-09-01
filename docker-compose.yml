@@ -21,6 +21,21 @@ services:
     ports:
       - "6379:6379"
 
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
 volumes:
   dbdata:
     driver: local
