@@ -2,6 +2,7 @@ import { ChangeEventHandler, forwardRef, useCallback } from 'react';
 
 import TextField, { TextFieldProps } from '@/components/TextField';
 import handleNumericChange from '@/utils/handleNumericChange';
+import config from '@/utils/config';
 
 export type NumericTextFieldRef = HTMLInputElement;
 export type NumericTextFieldProps = Omit<TextFieldProps, 'inputMode'>;
@@ -22,5 +23,9 @@ const NumericTextField = forwardRef<NumericTextFieldRef, NumericTextFieldProps>(
     );
   }
 );
+
+if (config.isDev) {
+  NumericTextField.displayName = "NumericTextField"
+}
 
 export default NumericTextField;

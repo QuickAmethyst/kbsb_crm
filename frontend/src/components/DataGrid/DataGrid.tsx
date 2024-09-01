@@ -1,5 +1,6 @@
 import {
   ComponentType,
+  CSSProperties,
   FC,
   ForwardRefExoticComponent,
   HTMLAttributes,
@@ -110,7 +111,7 @@ function renderCells<T, IsHeader extends boolean, HeaderCellProps, BodyCellProps
           leftLast: shadowed,
         })}
         style={{
-          ...get(props, 'style'),
+          ...get(props, 'style') as unknown as CSSProperties,
           left: fixedLeftSize.length === 0 ? 0 : `calc(${fixedLeftSize.join('+')})`,
           zIndex: 3,
         }}
@@ -129,7 +130,7 @@ function renderCells<T, IsHeader extends boolean, HeaderCellProps, BodyCellProps
   for (let j = 0; j < stack.length; j += 1) {
     const column = stack[j];
     const getProps = isHeader ? column.onHeaderCell : column.onCell;
-    const props: HTMLAttributes<unknown> = getProps?.(record, rowIndex) || {};
+    const props = getProps?.(record, rowIndex) || {};
 
     ans.push(
       <Component {...props} key={column.key}>
@@ -142,15 +143,15 @@ function renderCells<T, IsHeader extends boolean, HeaderCellProps, BodyCellProps
     const column = rStack[j];
     const shadowed = j === rStack.length - 1;
     const getProps = isHeader ? column.onHeaderCell : column.onCell;
-    const props: HTMLAttributes<unknown> = getProps?.(record, rowIndex) || {};
+    const props = getProps?.(record, rowIndex) || {};
 
     ans.push(
       <Component
         {...props}
         key={column.key}
-        className={classNames(props.className, stickyColumnCN, { shadowed, rightLast: shadowed })}
+        className={classNames(get(props, 'className'), stickyColumnCN, { shadowed, rightLast: shadowed })}
         style={{
-          ...props.style,
+          ...get(props, 'style') as never as CSSProperties,
           right: fixedRightSize.length === 0 ? 0 : `calc(${fixedRightSize.join('+')})`,
           zIndex: 3,
         }}
