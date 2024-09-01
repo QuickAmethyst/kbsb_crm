@@ -33,7 +33,7 @@ export default function ObjectListPageView({
               <Space fullWidth direction='vertical'>
                 {!!!data && <Text weight={400}>No Data</Text>}
                 {data?.map((v) => (
-                  <Link key={v.id} className="item" href={routes.dashboard.objects.detail(v.id)}>
+                  <Link key={v.id} className="item" href={routes.dashboard.objects.detail(v.id).index}>
                     <Text size={16} color="#0000EE">{v.name}</Text>
                     <Text>{v.description}</Text>
                   </Link>

@@ -13,6 +13,9 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
+    "\n  query PicklistField($fieldID: UUID!) {\n    picklistValues(fieldID: $fieldID) {\n      id\n      value\n    }\n  }\n": types.PicklistFieldDocument,
+    "\n  query AddRecordPage($objectID: UUID!, $objectInput: ObjectsInput) {\n    objects(input: $objectInput) {\n      data {\n        id\n        organizationID\n        name\n      }\n    }\n    fields(objectID: $objectID) {\n      id\n      label\n      dataType\n      defaultValue\n      isRequired\n    }\n  }\n": types.AddRecordPageDocument,
+    "\n  mutation AddRecordPageSubmit($input: WriteRecordInput!) {\n    storeRecord(input: $input) {\n      id\n    }\n  }\n": types.AddRecordPageSubmitDocument,
     "\n  query ObjectDetailPage($objectInput: ObjectsInput, $objectID: UUID!, $recordsInput: RecordsInput) {\n    objects(input: $objectInput) {\n      data {\n        id\n        organizationID\n        name\n      }\n    }\n    records(objectID: $objectID, input: $recordsInput) {\n      data {\n        id\n        objectID\n        data\n      }\n      paging {\n        currentPage\n        pageSize\n        total\n      }\n    }\n    fields(objectID: $objectID) {\n      label\n      dataType\n    }\n  }\n": types.ObjectDetailPageDocument,
     "\n  query ObjectListPage($input: ObjectsInput) {\n    objects(input: $input) {\n      data {\n        id\n        organizationID\n        name\n      }\n      paging {\n        currentPage\n        pageSize\n        total\n      }\n    }\n  }\n": types.ObjectListPageDocument,
 };
@@ -31,6 +34,18 @@ const documents = {
  */
 export function gql(source: string): unknown;
 
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query PicklistField($fieldID: UUID!) {\n    picklistValues(fieldID: $fieldID) {\n      id\n      value\n    }\n  }\n"): (typeof documents)["\n  query PicklistField($fieldID: UUID!) {\n    picklistValues(fieldID: $fieldID) {\n      id\n      value\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  query AddRecordPage($objectID: UUID!, $objectInput: ObjectsInput) {\n    objects(input: $objectInput) {\n      data {\n        id\n        organizationID\n        name\n      }\n    }\n    fields(objectID: $objectID) {\n      id\n      label\n      dataType\n      defaultValue\n      isRequired\n    }\n  }\n"): (typeof documents)["\n  query AddRecordPage($objectID: UUID!, $objectInput: ObjectsInput) {\n    objects(input: $objectInput) {\n      data {\n        id\n        organizationID\n        name\n      }\n    }\n    fields(objectID: $objectID) {\n      id\n      label\n      dataType\n      defaultValue\n      isRequired\n    }\n  }\n"];
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(source: "\n  mutation AddRecordPageSubmit($input: WriteRecordInput!) {\n    storeRecord(input: $input) {\n      id\n    }\n  }\n"): (typeof documents)["\n  mutation AddRecordPageSubmit($input: WriteRecordInput!) {\n    storeRecord(input: $input) {\n      id\n    }\n  }\n"];
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

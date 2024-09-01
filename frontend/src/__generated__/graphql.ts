@@ -94,10 +94,18 @@ export type PagingInput = {
   pageSize?: InputMaybe<Scalars['Uint']['input']>;
 };
 
+export type PicklistValues = {
+  __typename?: 'PicklistValues';
+  fieldID: Scalars['UUID']['output'];
+  id: Scalars['UUID']['output'];
+  value: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
   fields: Array<Field>;
   objects: ObjectsResult;
+  picklistValues: Array<PicklistValues>;
   records: RecordsResult;
 };
 
@@ -109,6 +117,11 @@ export type QueryFieldsArgs = {
 
 export type QueryObjectsArgs = {
   input?: InputMaybe<ObjectsInput>;
+};
+
+
+export type QueryPicklistValuesArgs = {
+  fieldID: Scalars['UUID']['input'];
 };
 
 
@@ -160,6 +173,28 @@ export type WriteRecordInput = {
   objectID: Scalars['UUID']['input'];
 };
 
+export type PicklistFieldQueryVariables = Exact<{
+  fieldID: Scalars['UUID']['input'];
+}>;
+
+
+export type PicklistFieldQuery = { __typename?: 'Query', picklistValues: Array<{ __typename?: 'PicklistValues', id: any, value: string }> };
+
+export type AddRecordPageQueryVariables = Exact<{
+  objectID: Scalars['UUID']['input'];
+  objectInput?: InputMaybe<ObjectsInput>;
+}>;
+
+
+export type AddRecordPageQuery = { __typename?: 'Query', objects: { __typename?: 'ObjectsResult', data: Array<{ __typename?: 'Object', id: any, organizationID: number, name: string }> }, fields: Array<{ __typename?: 'Field', id: any, label: string, dataType: FieldDataType, defaultValue?: string | null, isRequired: boolean }> };
+
+export type AddRecordPageSubmitMutationVariables = Exact<{
+  input: WriteRecordInput;
+}>;
+
+
+export type AddRecordPageSubmitMutation = { __typename?: 'Mutation', storeRecord: { __typename?: 'Record', id: any } };
+
 export type ObjectDetailPageQueryVariables = Exact<{
   objectInput?: InputMaybe<ObjectsInput>;
   objectID: Scalars['UUID']['input'];
@@ -177,5 +212,8 @@ export type ObjectListPageQueryVariables = Exact<{
 export type ObjectListPageQuery = { __typename?: 'Query', objects: { __typename?: 'ObjectsResult', data: Array<{ __typename?: 'Object', id: any, organizationID: number, name: string }>, paging: { __typename?: 'Paging', currentPage: any, pageSize: any, total: any } } };
 
 
+export const PicklistFieldDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PicklistField"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"fieldID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"picklistValues"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"fieldID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"fieldID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"value"}}]}}]}}]} as unknown as DocumentNode<PicklistFieldQuery, PicklistFieldQueryVariables>;
+export const AddRecordPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AddRecordPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ObjectsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"objects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizationID"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"fields"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"objectID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}},{"kind":"Field","name":{"kind":"Name","value":"defaultValue"}},{"kind":"Field","name":{"kind":"Name","value":"isRequired"}}]}}]}}]} as unknown as DocumentNode<AddRecordPageQuery, AddRecordPageQueryVariables>;
+export const AddRecordPageSubmitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddRecordPageSubmit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WriteRecordInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"storeRecord"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<AddRecordPageSubmitMutation, AddRecordPageSubmitMutationVariables>;
 export const ObjectDetailPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ObjectDetailPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ObjectsInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recordsInput"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"objects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizationID"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"records"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"objectID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recordsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"objectID"}},{"kind":"Field","name":{"kind":"Name","value":"data"}}]}},{"kind":"Field","name":{"kind":"Name","value":"paging"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentPage"}},{"kind":"Field","name":{"kind":"Name","value":"pageSize"}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"fields"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"objectID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}}]}}]}}]} as unknown as DocumentNode<ObjectDetailPageQuery, ObjectDetailPageQueryVariables>;
 export const ObjectListPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ObjectListPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ObjectsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"objects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizationID"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"paging"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentPage"}},{"kind":"Field","name":{"kind":"Name","value":"pageSize"}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]}}]} as unknown as DocumentNode<ObjectListPageQuery, ObjectListPageQueryVariables>;

@@ -46,6 +46,7 @@ export type SelectChildren<T> =
   | ReactElement<SelectOptionProps<T>>;
 
 export type SelectProps<T> = Omit<InputHTMLAttributes<HTMLInputElement>, 'value'> & {
+  ref?: ForwardedRef<SelectInstance>;
   open?: boolean;
   fullWidth?: boolean;
   value?: T;
@@ -295,7 +296,7 @@ function InternalSelect<T>(
   );
 }
 
-const Select = forwardRef(InternalSelect) as unknown as typeof InternalSelect & {
+const Select = forwardRef(InternalSelect as never) as unknown as typeof InternalSelect & {
   Option: typeof SelectOption;
 };
 

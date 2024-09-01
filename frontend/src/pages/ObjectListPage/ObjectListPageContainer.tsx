@@ -24,6 +24,7 @@ const query = gql(`
 export default function ObjectListPageContainer() {
   const [page, setPage] = useState(1);
   const { previousData, data, loading } = useQuery(query, {
+    fetchPolicy: 'cache-and-network',
     variables: { input: { paging: { currentPage: page, pageSize: 12 } } },
   });
 
