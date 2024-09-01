@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
 	"github.com/QuickAmethyst/kbsb_crm/module/object/domain"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/errors"
 	"github.com/QuickAmethyst/kbsb_crm/stdlibgo/sql"
@@ -11,7 +10,7 @@ import (
 )
 
 type Writer interface {
-	StoreObject(ctx context.Context, target *domain.Object) error
+	StoreObjectTx(tx sql.Tx, ctx context.Context, target *domain.Object) error
 	StoreFieldTx(tx sql.Tx, ctx context.Context, target *domain.Field) error
 	StorePicklistValuesTx(tx sql.Tx, ctx context.Context, target []*domain.PicklistValues) error
 	StoreRecordTx(tx sql.Tx, ctx context.Context, target *domain.Record) error
@@ -100,7 +99,7 @@ func (w *writer) StoreFieldTx(tx sql.Tx, ctx context.Context, target *domain.Fie
 	return store(ctx, tx, "fields", target)
 }
 
-func (w *writer) StoreObject(ctx context.Context, target *domain.Object) error {
+func (w *writer) StoreObjectTx(tx sql.Tx, ctx context.Context, target *domain.Object) error {
 	var err error
 	if target.ID == uuid.Nil {
 		target.ID, err = uuid.NewV7()
@@ -109,9 +108,7 @@ func (w *writer) StoreObject(ctx context.Context, target *domain.Object) error {
 		}
 	}
 
-	fmt.Println(target)
-
-	return store(ctx, w.db, "objects", target)
+	return store(ctx, tx, "objects", target)
 }
 
 func store(ctx context.Context, db sql.Common, tableName string, target interface{}) error {

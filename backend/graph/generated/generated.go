@@ -83,6 +83,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Fields  func(childComplexity int, objectID uuid.UUID) int
 		Objects func(childComplexity int, input *model.ObjectsInput) int
 		Records func(childComplexity int, objectID uuid.UUID, input *model.RecordsInput) int
 	}
@@ -107,6 +108,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Objects(ctx context.Context, input *model.ObjectsInput) (*model.ObjectsResult, error)
 	Records(ctx context.Context, objectID uuid.UUID, input *model.RecordsInput) (*model.RecordsResult, error)
+	Fields(ctx context.Context, objectID uuid.UUID) ([]model.Field, error)
 }
 
 type executableSchema struct {
@@ -282,6 +284,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Paging.Total(childComplexity), true
+
+	case "Query.fields":
+		if e.complexity.Query.Fields == nil {
+			break
+		}
+
+		args, err := ec.field_Query_fields_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Fields(childComplexity, args["objectID"].(uuid.UUID)), true
 
 	case "Query.objects":
 		if e.complexity.Query.Objects == nil {
@@ -462,6 +476,7 @@ var sources = []*ast.Source{
 	{Name: "../object.graphqls", Input: `extend type Query {
     objects(input: ObjectsInput): ObjectsResult!
     records(objectID: UUID!, input: RecordsInput): RecordsResult!
+    fields(objectID: UUID!): [Field!]!
 }
 
 extend type Mutation {
@@ -476,6 +491,7 @@ type ObjectsResult {
 }
 
 input ObjectsInput {
+    id: UUID
     paging: PagingInput
 }
 
@@ -628,6 +644,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_fields_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 uuid.UUID
+	if tmp, ok := rawArgs["objectID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("objectID"))
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["objectID"] = arg0
 	return args, nil
 }
 
@@ -1785,6 +1816,79 @@ func (ec *executionContext) fieldContext_Query_records(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_records_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_fields(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_fields(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Fields(rctx, fc.Args["objectID"].(uuid.UUID))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.Field)
+	fc.Result = res
+	return ec.marshalNField2ᚕgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐFieldᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_fields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Field_id(ctx, field)
+			case "objectID":
+				return ec.fieldContext_Field_objectID(ctx, field)
+			case "organizationID":
+				return ec.fieldContext_Field_organizationID(ctx, field)
+			case "label":
+				return ec.fieldContext_Field_label(ctx, field)
+			case "dataType":
+				return ec.fieldContext_Field_dataType(ctx, field)
+			case "defaultValue":
+				return ec.fieldContext_Field_defaultValue(ctx, field)
+			case "isIndexed":
+				return ec.fieldContext_Field_isIndexed(ctx, field)
+			case "isRequired":
+				return ec.fieldContext_Field_isRequired(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Field", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_fields_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3936,13 +4040,20 @@ func (ec *executionContext) unmarshalInputObjectsInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"paging"}
+	fieldsInOrder := [...]string{"id", "paging"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		case "paging":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("paging"))
 			data, err := ec.unmarshalOPagingInput2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐPagingInput(ctx, v)
@@ -4544,6 +4655,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "fields":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_fields(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -5011,6 +5144,50 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 
 func (ec *executionContext) marshalNField2githubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v model.Field) graphql.Marshaler {
 	return ec._Field(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNField2ᚕgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐFieldᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Field) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNField2githubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐField(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNField2ᚖgithubᚗcomᚋQuickAmethystᚋkbsb_crmᚋgraphᚋmodelᚐField(ctx context.Context, sel ast.SelectionSet, v *model.Field) graphql.Marshaler {
@@ -5662,6 +5839,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalUUID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v *uuid.UUID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalUUID(*v)
 	return res
 }
 

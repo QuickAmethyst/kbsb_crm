@@ -22,6 +22,7 @@ type Field struct {
 }
 
 type ObjectsInput struct {
+	ID     *uuid.UUID   `json:"id,omitempty"`
 	Paging *PagingInput `json:"paging,omitempty"`
 }
 

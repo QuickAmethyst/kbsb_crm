@@ -147,6 +147,13 @@ func (r *queryResolver) Objects(ctx context.Context, input *model.ObjectsInput) 
 	}
 
 	objects, paging, err = r.ObjectUsecase.GetObjectList(ctx, sql3.ObjectStatement{
+		ID: func() uuid.UUID {
+			if input != nil && input.ID != nil {
+				return *input.ID
+			}
+
+			return uuid.Nil
+		}(),
 		OrganizationID: appcontext.GetOrganizationID(ctx),
 	}, paging)
 
@@ -228,6 +235,40 @@ func (r *queryResolver) Records(ctx context.Context, objectID uuid.UUID, input *
 			Total:       paging.Total,
 		},
 	}, nil
+}
+
+// Fields is the resolver for the fields field.
+func (r *queryResolver) Fields(ctx context.Context, objectID uuid.UUID) ([]model.Field, error) {
+	fields, err := r.ObjectUsecase.GetAllFields(ctx, sql3.FieldStatement{
+		ObjectID:       objectID,
+		OrganizationID: appcontext.GetOrganizationID(ctx),
+	})
+
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	res := make([]model.Field, len(fields))
+	for i, field := range fields {
+		res[i] = model.Field{
+			ID:             field.ID,
+			ObjectID:       field.ObjectID,
+			OrganizationID: field.OrganizationID,
+			Label:          field.Label,
+			DataType:       model.FieldDataType(field.DataType),
+			DefaultValue: func() *string {
+				if field.DefaultValue.Valid {
+					return &field.DefaultValue.String
+				}
+
+				return nil
+			}(),
+			IsIndexed:  field.IsIndexed,
+			IsRequired: field.IsRequired,
+		}
+	}
+
+	return res, nil
 }
 
 // !!! WARNING !!!

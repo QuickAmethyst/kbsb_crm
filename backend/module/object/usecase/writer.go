@@ -234,5 +234,34 @@ func (w *writer) StoreField(ctx context.Context, target *StoreFieldInput) error 
 }
 
 func (w *writer) StoreObject(ctx context.Context, target *domain.Object) error {
-	return w.domain.StoreObject(ctx, target)
+	var err error
+
+	if target.ID == uuid.Nil {
+		target.ID, err = uuid.NewV7()
+		if err != nil {
+			return errors.PropagateWithCode(err, EcodeStoreFailed, "generate uuid v7 failed")
+		}
+	}
+
+	err = w.domain.Transaction(ctx, nil, func(tx sql2.Tx) error {
+		err = w.domain.StoreObjectTx(tx, ctx, target)
+		if err != nil {
+			return errors.Propagate(err, "Error on store object")
+		}
+
+		return w.domain.StoreFieldTx(tx, ctx, &domain.Field{
+			ObjectID:       target.ID,
+			OrganizationID: target.OrganizationID,
+			Label:          "Name",
+			DataType:       domain.StringDataType,
+			IsIndexed:      true,
+			IsRequired:     true,
+		})
+	})
+
+	if err != nil {
+		return errors.PropagateWithCode(err, EcodeStoreFailed, "Error on store")
+	}
+
+	return nil
 }
