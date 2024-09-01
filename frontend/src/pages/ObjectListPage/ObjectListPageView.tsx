@@ -6,6 +6,8 @@ import { ObjectsResult } from "@/__generated__/graphql";
 import Spinner from "@/components/Spinner";
 import theme from "@/utils/theme";
 import Pagination, { PaginationProps } from "@/components/Pagination";
+import Link from "next/link";
+import routes from "@/utils/routes";
 
 export type ObjectListPageViewProps = {
   loading?: boolean;
@@ -24,16 +26,17 @@ export default function ObjectListPageView({
         <div className='wrapper'>
           <Space fullWidth direction='vertical' size={[0, 24]}>
             <Text as="h2" size={24} weight={600}>Objects</Text>
+            
             <Divider />
 
             <Spinner visible={loading}>
               <Space fullWidth direction='vertical'>
                 {!!!data && <Text weight={400}>No Data</Text>}
                 {data?.map((v) => (
-                  <div key={v.id} className="item">
+                  <Link key={v.id} className="item" href={routes.dashboard.objects.detail(v.id)}>
                     <Text size={16} color="#0000EE">{v.name}</Text>
                     <Text>{v.description}</Text>
-                  </div>
+                  </Link>
                 ))}
               </Space>
             </Spinner>

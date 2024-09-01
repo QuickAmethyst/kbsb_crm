@@ -72,6 +72,7 @@ export type Object = {
 };
 
 export type ObjectsInput = {
+  id?: InputMaybe<Scalars['UUID']['input']>;
   paging?: InputMaybe<PagingInput>;
 };
 
@@ -95,8 +96,14 @@ export type PagingInput = {
 
 export type Query = {
   __typename?: 'Query';
+  fields: Array<Field>;
   objects: ObjectsResult;
   records: RecordsResult;
+};
+
+
+export type QueryFieldsArgs = {
+  objectID: Scalars['UUID']['input'];
 };
 
 
@@ -153,6 +160,15 @@ export type WriteRecordInput = {
   objectID: Scalars['UUID']['input'];
 };
 
+export type ObjectDetailPageQueryVariables = Exact<{
+  objectInput?: InputMaybe<ObjectsInput>;
+  objectID: Scalars['UUID']['input'];
+  recordsInput?: InputMaybe<RecordsInput>;
+}>;
+
+
+export type ObjectDetailPageQuery = { __typename?: 'Query', objects: { __typename?: 'ObjectsResult', data: Array<{ __typename?: 'Object', id: any, organizationID: number, name: string }> }, records: { __typename?: 'RecordsResult', data: Array<{ __typename?: 'Record', id: any, objectID: any, data: any }>, paging: { __typename?: 'Paging', currentPage: any, pageSize: any, total: any } }, fields: Array<{ __typename?: 'Field', label: string, dataType: FieldDataType }> };
+
 export type ObjectListPageQueryVariables = Exact<{
   input?: InputMaybe<ObjectsInput>;
 }>;
@@ -161,4 +177,5 @@ export type ObjectListPageQueryVariables = Exact<{
 export type ObjectListPageQuery = { __typename?: 'Query', objects: { __typename?: 'ObjectsResult', data: Array<{ __typename?: 'Object', id: any, organizationID: number, name: string }>, paging: { __typename?: 'Paging', currentPage: any, pageSize: any, total: any } } };
 
 
+export const ObjectDetailPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ObjectDetailPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ObjectsInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"recordsInput"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RecordsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"objects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizationID"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"records"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"objectID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"recordsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"objectID"}},{"kind":"Field","name":{"kind":"Name","value":"data"}}]}},{"kind":"Field","name":{"kind":"Name","value":"paging"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentPage"}},{"kind":"Field","name":{"kind":"Name","value":"pageSize"}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"fields"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"objectID"},"value":{"kind":"Variable","name":{"kind":"Name","value":"objectID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"label"}},{"kind":"Field","name":{"kind":"Name","value":"dataType"}}]}}]}}]} as unknown as DocumentNode<ObjectDetailPageQuery, ObjectDetailPageQueryVariables>;
 export const ObjectListPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ObjectListPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ObjectsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"objects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"organizationID"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"paging"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentPage"}},{"kind":"Field","name":{"kind":"Name","value":"pageSize"}},{"kind":"Field","name":{"kind":"Name","value":"total"}}]}}]}}]}}]} as unknown as DocumentNode<ObjectListPageQuery, ObjectListPageQueryVariables>;

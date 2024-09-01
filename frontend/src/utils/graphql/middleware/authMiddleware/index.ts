@@ -10,7 +10,7 @@ const authMiddleware = new ApolloLink((operation, forward) => {
     router.replace(routes.signIn);
     return forward(operation);
   }
-  console.log("DEBUG", organizationCookie)
+  
   const { id } = organizationCookie;
 
   operation.setContext(({ headers }: { headers: Record<string, string> }) => ({

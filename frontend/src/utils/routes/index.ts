@@ -1,7 +1,10 @@
 const routes = {
   signIn: '/',
   dashboard: {
-    index: '/dashboard'
+    index: '/dashboard',
+    objects: {
+      detail: (id: string) => `/dashboard/objects/${id}`
+    }
   }
 };
 
