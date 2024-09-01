@@ -2,12 +2,19 @@ extend type Query {
     objects(input: ObjectsInput): ObjectsResult!
     records(objectID: UUID!, input: RecordsInput): RecordsResult!
     fields(objectID: UUID!): [Field!]!
+    picklistValues(fieldID: UUID!): [PicklistValues!]!
 }
 
 extend type Mutation {
     storeObject(input: WriteObjectInput!): Object!
     storeField(input: WriteFieldInput!): Field!
     storeRecord(input: WriteRecordInput!): Record!
+}
+
+type PicklistValues {
+    id: UUID!
+    fieldID: UUID!
+    value: String!
 }
 
 type ObjectsResult {

@@ -31,6 +31,12 @@ type ObjectsResult struct {
 	Paging *Paging  `json:"paging"`
 }
 
+type PicklistValues struct {
+	ID      uuid.UUID `json:"id"`
+	FieldID uuid.UUID `json:"fieldID"`
+	Value   string    `json:"value"`
+}
+
 type Record struct {
 	ID       uuid.UUID              `json:"id"`
 	ObjectID uuid.UUID              `json:"objectID"`

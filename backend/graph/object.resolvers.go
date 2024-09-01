@@ -271,6 +271,25 @@ func (r *queryResolver) Fields(ctx context.Context, objectID uuid.UUID) ([]model
 	return res, nil
 }
 
+// PicklistValues is the resolver for the picklistValues field.
+func (r *queryResolver) PicklistValues(ctx context.Context, fieldID uuid.UUID) ([]model.PicklistValues, error) {
+	picklistValues, err := r.ObjectUsecase.GetAllPicklistValuesByFieldID(ctx, fieldID)
+	if err != nil {
+		return nil, sdkGraphql.NewError(err, sdkError.RootCause(err).Error(), sdkError.GetCode(err))
+	}
+
+	res := make([]model.PicklistValues, len(picklistValues))
+	for i, picklistValue := range picklistValues {
+		res[i] = model.PicklistValues{
+			ID:      picklistValue.ID,
+			FieldID: picklistValue.FieldID,
+			Value:   picklistValue.Value,
+		}
+	}
+
+	return res, nil
+}
+
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have
 // one last chance to move it out of harms way if you want. There are two reasons this happens:

@@ -128,13 +128,14 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 		}
 	}
 
-	err := r.db.SelectContext(ctx, &res, r.db.Rebind(baseQuery), args...)
+	limitClause, limitClauseArgs := p.BuildQuery()
+
+	err := r.db.SelectContext(ctx, &res, r.db.Rebind(baseQuery+" "+limitClause), append(args, limitClauseArgs...)...)
 	if err != nil {
 		return res, p, errors.PropagateWithCode(err, EcodeGetListFailed, "Error on get records")
 	}
 
-	limitClause, limitClauseArgs := p.BuildQuery()
-	err = r.db.GetContext(ctx, &p.Total, r.db.Rebind(countQuery+" "+limitClause), append(args, limitClauseArgs...)...)
+	err = r.db.GetContext(ctx, &p.Total, r.db.Rebind(countQuery), args...)
 	if err != nil {
 		return res, p, errors.PropagateWithCode(err, EcodeGetListFailed, "Error on get records")
 	}
