@@ -162,3 +162,21 @@ Headers
   "x-organization-id": 1
 }
 ```
+
+### Analyze Query Performance
+```
+EXPLAIN
+SELECT r.* 
+FROM
+	records r 
+	JOIN indexes ip1 ON r.id = ip1.record_id 
+	AND ip1.field_id = 'f1e56d30-5c34-497e-9b7f-401aedf3d8a6' 
+	AND ip1.string_value = 'Male'
+	JOIN indexes ip2 ON r.id = ip2.record_id 
+	AND ip2.field_id = '8ad26a42-3743-45d7-989f-726235d3a1e1' 
+	AND ip2.string_value = 'Basic'
+	JOIN indexes ip3 ON r.id = ip3.record_id 
+	AND ip3.field_id = 'b2d7b0ae-2130-4a1f-ae15-527f5ebd379f'
+	AND ip3.number_value = 28
+WHERE r.object_id = '1b3505c9-847a-4772-b920-8212dc21731f'
+```
