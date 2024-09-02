@@ -7,6 +7,9 @@ First, run the development server:
     docker-compose up -d
 ```
 
+Sometimes the database migration failed due to database startup is still in progress. To solve this problem,
+just restart the docker-compose.
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

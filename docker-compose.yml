@@ -46,6 +46,9 @@ services:
     restart: 'no'
     depends_on:
       - db
+      - redis
+      - backend
+      - frontend
 
 volumes:
   dbdata:
