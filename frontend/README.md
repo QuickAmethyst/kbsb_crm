@@ -4,39 +4,158 @@
 
 First, run the development server:
 ```
-    docker-com
+    docker-compose up -d
 ```
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+Login using Acme Inc. The Blue Sky Inc data has not populated yet.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+You can start create record by choosing desired object.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## GQL
+You can interact with the application GQL by visiting [http://localhost:8000](http://localhost:8000)
+The app identify the organization by using header `x-organization-id`.
+For Acme Inc, the organization id is `1`.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Create Object
+Create organization object.
 
-## Learn More
+```
+mutation StoreObject($input: WriteObjectInput!) {
+  storeObject(input: $input) {
+    id
+    organizationID
+    name
+    description
+  }
+}
 
-To learn more about Next.js, take a look at the following resources:
+Variables
+{
+  "input": {
+    "name": "Customer"
+  }
+}
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Headers
+{
+  "x-organization-id": 1
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Create Field
+You can create field for the object
+```
+mutation Field($input:WriteFieldInput!) {
+  storeField(input:$input) {
+    id
+    organizationID
+    objectID
+    label
+    dataType
+    defaultValue
+    isIndexed
+    isRequired
+  }
+}
 
-## Deploy on Vercel
+Variables
+{
+  "input": {
+    "objectID": "1b3505c9-847a-4772-b920-8212dc21731f", // Customer
+    "label": "subscription",
+    "dataType": "picklist",
+    "isIndexed": true,
+    "isRequired": true,
+    "defaultValue": "Basic",
+    "picklistValues": ["Basic", "Standard", "Premium"]
+  }
+}
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Headers
+{
+  "x-organization-id": 1
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Create Record
+Create object's record
+```
+mutation StoreRecord($input: WriteRecordInput!) {
+  storeRecord(input:$input) {
+    id
+    objectID
+    data
+  }
+}
+
+Variables
+{
+  "input": {
+    "objectID": "1b3505c9-847a-4772-b920-8212dc21731f", // Customer
+    "data": {
+      "age": 12,
+      "gender": "Female",
+      "subscription": "Basic"
+    }
+  }
+}
+
+Headers
+{
+  "x-organization-id": 1
+}
+```
+
+### Get and Filter Record
+You can get list of records and filter it.
+Currently supported filter operation is `EQ`.
+
+```
+query Records($objectID: UUID!, $input: RecordsInput) {
+  records(objectID: $objectID, input: $input) {
+    data {
+      id
+      objectID
+      data
+    }
+    paging {
+      currentPage
+      pageSize
+      total
+    }
+  }
+}
+
+Variables
+{
+  "objectID": "1b3505c9-847a-4772-b920-8212dc21731f",
+  "input": {
+    "paging": {
+      "pageSize": 12,
+      "currentPage": 1
+    },
+    "filters": [
+      {
+        "fieldID": "f1e56d30-5c34-497e-9b7f-401aedf3d8a6",
+        "value": "Male"
+      },
+      {
+        "fieldID": "8ad26a42-3743-45d7-989f-726235d3a1e1",
+        "value": "Basic"
+      },
+      {
+        "fieldID": "b2d7b0ae-2130-4a1f-ae15-527f5ebd379f",
+        "value": "28"
+      }
+    ]
+  }
+}
+
+Headers
+{
+  "x-organization-id": 1
+}
+```
