@@ -31,6 +31,10 @@ func (w *writer) Transaction(ctx context.Context, opts *sql.TxOptions, txFn func
 }
 
 func (w *writer) BulkStoreIndexTx(tx sql.Tx, ctx context.Context, target []*domain.Index) error {
+	if len(target) == 0 {
+		return nil
+	}
+
 	for i := range target {
 		if target[i].CreatedAt.IsZero() {
 			target[i].CreatedAt = time.Now()

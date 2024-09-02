@@ -57,10 +57,17 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 	res := make([]domain.Record, 0)
 	p.Normalize()
 
-	indexJoinCounter := 0
+	var (
+		indexJoinCounter = 0
+		whereClauses     []string
+		whereClauseArgs  []interface{}
+	)
+
 	args := make([]interface{}, 0)
 	baseQuery := "SELECT r.* FROM records r"
 	countQuery := "SELECT COUNT(*) FROM records r"
+	whereClauses = append(whereClauses, "r.object_id = ?")
+	whereClauseArgs = append(whereClauseArgs, objectID)
 
 	if len(filters) > 0 {
 		filterIDs := make([]uuid.UUID, 0)
@@ -81,11 +88,6 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 		for _, field := range fields {
 			mapFilters[field.ID] = field
 		}
-
-		var (
-			whereClauses    []string
-			whereClauseArgs []interface{}
-		)
 
 		for _, filter := range filters {
 			field, ok := mapFilters[filter.FieldID]
@@ -119,13 +121,13 @@ func (r *reader) GetRecordListByObjectID(ctx context.Context, objectID uuid.UUID
 
 		baseQuery = strings.TrimSuffix(baseQuery, " AND ")
 		countQuery = strings.TrimSuffix(countQuery, " AND ")
+	}
 
-		if len(whereClauses) > 0 {
-			q := " WHERE " + strings.Join(whereClauses, " AND ")
-			baseQuery += q
-			countQuery += q
-			args = append(args, whereClauseArgs...)
-		}
+	if len(whereClauses) > 0 {
+		q := " WHERE " + strings.Join(whereClauses, " AND ")
+		baseQuery += q
+		countQuery += q
+		args = append(args, whereClauseArgs...)
 	}
 
 	limitClause, limitClauseArgs := p.BuildQuery()
