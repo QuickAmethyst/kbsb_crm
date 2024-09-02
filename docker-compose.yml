@@ -36,6 +36,17 @@ services:
     depends_on:
       - backend
 
+  migrate:
+    image: migrate/migrate
+    container_name: migrate
+    command: -database "postgres://postgres:postgres@localhost:5432/crm?sslmode=disable" -path /usr/src/app/module/object/migration up
+    volumes:
+      - ./backend:/usr/src/app
+    network_mode: host
+    restart: 'no'
+    depends_on:
+      - db
+
 volumes:
   dbdata:
     driver: local

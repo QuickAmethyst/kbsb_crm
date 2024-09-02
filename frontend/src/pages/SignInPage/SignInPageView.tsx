@@ -33,7 +33,7 @@ export default function SignInPageView({
               }}
             >
               <Select.Option value={1}>Acme Inc</Select.Option>
-              <Select.Option value={2}>Blue Sky Inc</Select.Option>
+              <Select.Option value={2}>Blue Sky Inc (Data is Empty)</Select.Option>
             </Select>
 
             <Button fullWidth type="submit">Sign In</Button>
