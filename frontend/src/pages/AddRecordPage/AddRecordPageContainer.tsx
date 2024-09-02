@@ -37,8 +37,6 @@ const mutation = gql(`
 `)
 
 export default function AddRecordPageContainer({ objectID }: AddRecordPageContainerProps) {
-  const { push } = useRouter();
-
   const { loading: getLoading, data } = useQuery(query, {
     variables: {
       objectID,
@@ -50,7 +48,7 @@ export default function AddRecordPageContainer({ objectID }: AddRecordPageContai
 
   const [createRecord, { loading: mutationLoading }] = useMutation(mutation, {
     onCompleted: () => {
-      push(routes.dashboard.objects.detail(objectID).index);
+      document.location.href = routes.dashboard.objects.detail(objectID).index;
     }
   })
 

@@ -35,6 +35,7 @@ export default function AddRecordPageView({ object, fields, onValid }: AddRecord
             }
           })}
           key={f.id}
+          label={f.label}
           required={f.isRequired}
           defaultValue={f.defaultValue || ''}
           error={!!errors[f.label]}
@@ -67,7 +68,7 @@ export default function AddRecordPageView({ object, fields, onValid }: AddRecord
       return (
         <Controller
           control={control}
-          name='transDate'
+          name={f.label}
           rules={{
             ...(f.isRequired && { required: `${f.label} is required` })
           }}
